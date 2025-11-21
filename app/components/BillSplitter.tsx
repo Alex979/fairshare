@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Camera, Upload, Users, Calculator, PieChart, DollarSign, RefreshCw, ChevronDown, ChevronUp, AlertCircle, List, Receipt, ExternalLink, Moon, Sun } from 'lucide-react';
-import { BillData, CalculatedTotals, CalculatedUserTotal } from '../types';
+import { Camera, Upload, Users, Calculator, PieChart, DollarSign, RefreshCw, ChevronDown, ChevronUp, AlertCircle, List, Receipt, ExternalLink, Moon, Sun, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { BillData, CalculatedTotals, CalculatedUserTotal, LineItem } from '../types';
 import { processReceiptAction } from '../actions';
 
 const MOCK_DATA: BillData = {
@@ -39,6 +39,8 @@ export default function BillSplitter() {
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editingItem, setEditingItem] = useState<Partial<import('../types').LineItem> | null>(null);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
 
   // --- DARK MODE INIT ---
   useEffect(() => {
@@ -116,6 +118,61 @@ export default function BillSplitter() {
       reader.onload = (e) => setImage(e.target?.result as string);
       reader.readAsDataURL(file);
     }
+  };
+
+  const openAddModal = () => {
+    setEditingItem({ description: "", total_price: 0, quantity: 1, category: "custom" });
+    setIsItemModalOpen(true);
+  };
+
+  const openEditModal = (item: LineItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingItem({ ...item });
+    setIsItemModalOpen(true);
+  };
+
+  const saveItem = () => {
+    if (!editingItem || !editingItem.description) return;
+
+    setData(prev => {
+      if (!prev) return null;
+      const newItem: LineItem = {
+        id: editingItem.id || `item-${Date.now()}`,
+        description: editingItem.description || "Item",
+        quantity: editingItem.quantity || 1,
+        unit_price: editingItem.total_price || 0,
+        total_price: editingItem.total_price || 0,
+        category: editingItem.category || "custom"
+      };
+
+      if (editingItem.id) {
+        return {
+          ...prev,
+          line_items: prev.line_items.map(i => i.id === editingItem.id ? newItem : i)
+        };
+      } else {
+        return {
+          ...prev,
+          line_items: [...prev.line_items, newItem]
+        };
+      }
+    });
+    setIsItemModalOpen(false);
+    setEditingItem(null);
+  };
+
+  const deleteItem = () => {
+    if (!editingItem?.id) return;
+    setData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        line_items: prev.line_items.filter(i => i.id !== editingItem.id),
+        split_logic: prev.split_logic.filter(l => l.item_id !== editingItem.id)
+      };
+    });
+    setIsItemModalOpen(false);
+    setEditingItem(null);
   };
 
   const processReceipt = async () => {
@@ -286,7 +343,12 @@ export default function BillSplitter() {
 
                 {/* Line Items */}
                 <div className="space-y-3">
-                    <h2 className="font-semibold text-gray-700 dark:text-gray-200 ml-1 text-sm">Line Items</h2>
+                    <div className="flex justify-between items-center ml-1">
+                        <h2 className="font-semibold text-gray-700 dark:text-gray-200 text-sm">Line Items</h2>
+                        <button onClick={openAddModal} className="text-blue-600 dark:text-blue-400 text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30 px-2 py-1 rounded flex items-center gap-1">
+                            <Plus className="w-3 h-3" /> Add Item
+                        </button>
+                    </div>
                     {data.line_items.map(item => {
                     const logic = data.split_logic.find(l => l.item_id === item.id);
                     const isExpanded = activeItemId === item.id;
@@ -315,7 +377,12 @@ export default function BillSplitter() {
                                 )}
                             </div>
                             </div>
-                            {isExpanded ? <ChevronUp className="text-gray-400 w-4 h-4" /> : <ChevronDown className="text-gray-400 w-4 h-4" />}
+                            <div className="flex items-center gap-2">
+                                <button onClick={(e) => openEditModal(item, e)} className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <Pencil className="w-3 h-3" />
+                                </button>
+                                {isExpanded ? <ChevronUp className="text-gray-400 w-4 h-4" /> : <ChevronDown className="text-gray-400 w-4 h-4" />}
+                            </div>
                         </div>
 
                         {isExpanded && (
@@ -492,6 +559,59 @@ export default function BillSplitter() {
             </div>
             </div>
         </div>
+
+        {/* ITEM MODAL */}
+        {isItemModalOpen && editingItem && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xs p-6 space-y-4 border dark:border-gray-700">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-white">{editingItem.id ? 'Edit Item' : 'Add Item'}</h3>
+                        <button onClick={() => setIsItemModalOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
+                        <input 
+                            value={editingItem.description}
+                            onChange={(e) => setEditingItem({...editingItem, description: e.target.value})}
+                            className="w-full border dark:border-gray-600 rounded-lg p-2 text-base dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Item name"
+                            autoFocus
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price ($)</label>
+                        <input 
+                            type="number"
+                            value={editingItem.total_price}
+                            onChange={(e) => setEditingItem({...editingItem, total_price: parseFloat(e.target.value) || 0})}
+                            className="w-full border dark:border-gray-600 rounded-lg p-2 text-base dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="0.00"
+                        />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                        {editingItem.id && (
+                            <button 
+                                onClick={deleteItem}
+                                className="flex-1 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-medium py-2 rounded-lg text-sm flex items-center justify-center gap-1"
+                            >
+                                <Trash2 className="w-4 h-4" /> Delete
+                            </button>
+                        )}
+                        <button 
+                            onClick={saveItem}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-sm shadow-lg shadow-blue-200 dark:shadow-none"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
       </div>
     );
   }
