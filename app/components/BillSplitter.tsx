@@ -501,13 +501,15 @@ export default function BillSplitter() {
     <div className={isDarkMode ? "dark" : ""}>
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex flex-col items-center justify-center p-4 font-sans text-gray-800 dark:text-gray-100 transition-colors duration-200">
         
-        {/* Dark Mode Toggle on Home */}
-        <button onClick={toggleDarkMode} className="absolute top-6 right-6 p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors text-gray-700 dark:text-white">
+        <button onClick={toggleDarkMode} className="hidden sm:block absolute top-6 right-6 p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors text-gray-700 dark:text-white">
              {isDarkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
         </button>
 
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden transition-colors duration-200">
-            <div className="bg-blue-600 dark:bg-blue-700 p-6 text-center transition-colors duration-200">
+            <div className="relative bg-blue-600 dark:bg-blue-700 p-6 text-center transition-colors duration-200">
+            <button onClick={toggleDarkMode} className="sm:hidden absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white">
+                 {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
                 <PieChart className="w-8 h-8 text-white" />
             </div>
