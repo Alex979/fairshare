@@ -1,7 +1,8 @@
 import { BillData, CalculatedTotals, CalculatedUserTotal } from "../types";
+import { DEFAULT_CURRENCY, CURRENCY_LOCALE, VENMO_NOTE_MAX_LENGTH, UNASSIGNED_ID, UNASSIGNED_NAME } from "./constants";
 
-export const formatMoney = (amount: number, currency: string = "USD") => {
-  return new Intl.NumberFormat("en-US", {
+export const formatMoney = (amount: number, currency: string = DEFAULT_CURRENCY) => {
+  return new Intl.NumberFormat(CURRENCY_LOCALE, {
     style: "currency",
     currency: currency,
   }).format(amount);
@@ -10,7 +11,9 @@ export const formatMoney = (amount: number, currency: string = "USD") => {
 export const generateVenmoLink = (user: CalculatedUserTotal) => {
   const amount = user.total.toFixed(2);
   let note = `${user.items.map((i) => i.description).join(", ")}`;
-  if (note.length > 150) note = note.substring(0, 147) + "...";
+  if (note.length > VENMO_NOTE_MAX_LENGTH) {
+    note = note.substring(0, VENMO_NOTE_MAX_LENGTH - 3) + "...";
+  }
   return `venmo://paycharge?txn=charge&amount=${amount}&note=${encodeURIComponent(
     note
   )}`;
@@ -32,8 +35,8 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
       items: [],
     };
   });
-  totals["unassigned"] = {
-    name: "Unassigned",
+  totals[UNASSIGNED_ID] = {
+    name: UNASSIGNED_NAME,
     base_amount: 0,
     tax_share: 0,
     tip_share: 0,
@@ -47,8 +50,8 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
     const allocs = logic ? logic.allocations : [];
 
     if (!allocs || allocs.length === 0) {
-      totals["unassigned"].base_amount += item.total_price;
-      totals["unassigned"].items.push({
+      totals[UNASSIGNED_ID].base_amount += item.total_price;
+      totals[UNASSIGNED_ID].items.push({
         description: item.description,
         total_price: item.total_price,
         share: 1,
@@ -72,8 +75,8 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
     });
   });
 
-  const getModValue = (mod: any, basis: number) => {
-    if (!mod) return 0;
+  const getModValue = (mod: { type: 'fixed' | 'percentage'; value: number } | undefined, basis: number): number => {
+    if (!mod || mod.value === undefined || mod.value === null) return 0;
     return mod.type === "percentage" ? basis * (mod.value / 100) : mod.value;
   };
 

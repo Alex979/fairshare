@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { Camera, Moon, Sun, PieChart, AlertCircle } from "lucide-react";
+import { APP_NAME, APP_TAGLINE } from "../../../lib/constants";
 
 interface InputViewProps {
   isDarkMode: boolean;
@@ -47,61 +48,78 @@ export const InputView: React.FC<InputViewProps> = ({
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
               <PieChart className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">FairShare</h1>
+            <h1 className="text-2xl font-bold text-white">{APP_NAME}</h1>
             <p className="text-blue-100 text-sm">
-              Snap a receipt, explain the split, done.
+              {APP_TAGLINE}
             </p>
           </div>
 
           <div className="p-6 space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="receipt-upload" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 1. Upload Receipt
               </label>
               <div
                 className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl h-40 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 transition-colors cursor-pointer overflow-hidden relative"
                 onClick={() => fileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+                aria-label="Upload receipt image"
               >
                 {image ? (
                   <img
                     src={image}
-                    alt="Receipt"
+                    alt="Receipt preview"
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <>
-                    <Camera className="w-8 h-8 text-gray-400 dark:text-gray-500 mb-2" />
+                    <Camera className="w-8 h-8 text-gray-400 dark:text-gray-500 mb-2" aria-hidden="true" />
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Tap to upload photo
                     </p>
                   </>
                 )}
                 <input
+                  id="receipt-upload"
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
                   onChange={handleImageUpload}
+                  aria-label="Receipt image file input"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="split-instructions" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 2. How are we splitting?
               </label>
               <textarea
+                id="split-instructions"
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white text-gray-800 placeholder-gray-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                 rows={3}
                 placeholder="e.g. 'Alice and Bob shared the apps. Alice had the burger. Add a 20% tip.'"
                 value={promptText}
                 onChange={(e) => setPromptText(e.target.value)}
+                aria-label="Instructions for how to split the bill"
               ></textarea>
             </div>
 
             {error && (
-              <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 p-3 rounded-lg text-sm flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <div 
+                role="alert" 
+                aria-live="polite"
+                className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 p-3 rounded-lg text-sm flex items-start gap-2"
+              >
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                 {error}
               </div>
             )}

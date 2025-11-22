@@ -1,5 +1,6 @@
 import React from "react";
 import { Calculator, Sun, Moon, RefreshCw } from "lucide-react";
+import { APP_NAME } from "../../../lib/constants";
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -19,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
           <Calculator className="w-4 h-4 text-white" />
         </div>
         <h1 className="text-lg font-bold text-gray-800 dark:text-white">
-          FairShare
+          {APP_NAME}
         </h1>
       </div>
       <div className="flex items-center gap-3">

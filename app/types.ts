@@ -29,10 +29,16 @@ export interface Modifier {
   value: number;
 }
 
+export interface Fee {
+  description: string;
+  type: 'fixed' | 'percentage';
+  value: number;
+}
+
 export interface Modifiers {
   tax: Modifier;
   tip: Modifier;
-  fees: any[];
+  fees: Fee[];
 }
 
 export interface Meta {

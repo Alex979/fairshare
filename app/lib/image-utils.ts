@@ -1,4 +1,6 @@
-export const compressImage = (file: File, maxWidth = 1280, quality = 0.7): Promise<string> => {
+import { IMAGE_MAX_WIDTH, IMAGE_QUALITY, IMAGE_MIME_TYPE } from "./constants";
+
+export const compressImage = (file: File, maxWidth = IMAGE_MAX_WIDTH, quality = IMAGE_QUALITY): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -27,9 +29,8 @@ export const compressImage = (file: File, maxWidth = 1280, quality = 0.7): Promi
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
         
-        // Determine format based on input, but prefer JPEG for photos
-        const mimeType = 'image/jpeg';
-        const dataUrl = canvas.toDataURL(mimeType, quality);
+        // Use JPEG for photos to optimize size
+        const dataUrl = canvas.toDataURL(IMAGE_MIME_TYPE, quality);
         resolve(dataUrl);
       };
       img.onerror = (error) => reject(error);

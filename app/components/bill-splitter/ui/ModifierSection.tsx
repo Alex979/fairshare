@@ -18,38 +18,48 @@ export const ModifierSection: React.FC<ModifierSectionProps> = ({
       </h2>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">
+          <label htmlFor="tax-value" className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">
             Tax ($)
           </label>
           <input
+            id="tax-value"
             type="number"
+            step="0.01"
+            min="0"
             value={modifiers.tax.value}
             onChange={(e) =>
               onUpdateModifier("tax", "value", parseFloat(e.target.value) || 0)
             }
             className="w-full p-2 border dark:border-gray-600 rounded text-right font-mono text-base dark:bg-gray-700 dark:text-white"
+            aria-label="Tax amount in dollars"
           />
         </div>
         <div>
-          <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">
+          <label htmlFor="tip-type" className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">
             Tip
           </label>
           <div className="flex">
             <select
+              id="tip-type"
               value={modifiers.tip.type}
               onChange={(e) => onUpdateModifier("tip", "type", e.target.value)}
               className="bg-gray-50 dark:bg-gray-700 border-y border-l dark:border-gray-600 rounded-l text-xs px-1 dark:text-white"
+              aria-label="Tip type"
             >
               <option value="percentage">%</option>
               <option value="fixed">$</option>
             </select>
             <input
+              id="tip-value"
               type="number"
+              step={modifiers.tip.type === 'percentage' ? '1' : '0.01'}
+              min="0"
               value={modifiers.tip.value}
               onChange={(e) =>
                 onUpdateModifier("tip", "value", parseFloat(e.target.value) || 0)
               }
               className="w-full p-2 border dark:border-gray-600 rounded-r text-right font-mono text-base dark:bg-gray-700 dark:text-white"
+              aria-label={`Tip ${modifiers.tip.type === 'percentage' ? 'percentage' : 'amount in dollars'}`}
             />
           </div>
         </div>

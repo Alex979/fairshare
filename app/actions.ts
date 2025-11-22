@@ -1,5 +1,8 @@
 'use server';
 
+import { API_MODEL, API_ENDPOINT } from "./lib/constants";
+import { getOpenRouterApiKey } from "./lib/env";
+
 const SYSTEM_PROMPT = `
 You are a receipt parsing engine. Return ONLY raw JSON. No markdown, no explanation.
 Input: An image of a receipt and a text description of how to split it.
@@ -34,24 +37,39 @@ Output this exact structure:
 }
 `;
 
+interface OpenRouterError {
+  error?: {
+    message?: string;
+    code?: string;
+  };
+}
+
+interface OpenRouterResponse {
+  choices?: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+  error?: {
+    message?: string;
+  };
+}
+
 export async function processReceiptAction(base64Data: string, userPrompt: string) {
-  const apiKey = process.env.OPENROUTER_API_KEY || "";
-  
   console.log(`Processing receipt: ${Math.round(base64Data.length / 1024)}KB payload`);
 
-  if (!apiKey) {
-    throw new Error("OpenRouter API Key not configured on server.");
-  }
+  // Validate environment and get API key
+  const apiKey = getOpenRouterApiKey();
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch(API_ENDPOINT, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-preview-09-2025",
+        model: API_MODEL,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           {
@@ -70,8 +88,19 @@ export async function processReceiptAction(base64Data: string, userPrompt: strin
       })
     });
 
-    const result = await response.json();
-    if (result.error) throw new Error(result.error.message || "OpenRouter API Error");
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    const result = await response.json() as OpenRouterResponse;
+    
+    if (result.error) {
+      throw new Error(result.error.message || "OpenRouter API Error");
+    }
+
+    if (!result.choices?.[0]?.message?.content) {
+      throw new Error("Invalid response format from API");
+    }
 
     let jsonText = result.choices[0].message.content;
     // Clean up markdown code blocks if present
@@ -80,9 +109,10 @@ export async function processReceiptAction(base64Data: string, userPrompt: strin
     const parsedData = JSON.parse(jsonText);
     
     return parsedData;
-  } catch (err: any) {
+  } catch (err) {
     console.error("OpenRouter API Error:", err);
-    throw new Error(err.message || "Failed to process receipt");
+    const errorMessage = err instanceof Error ? err.message : "Failed to process receipt";
+    throw new Error(errorMessage);
   }
 }
 
