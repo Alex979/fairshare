@@ -6,6 +6,8 @@ export interface Participant {
 export interface LineItem {
   id: string;
   description: string;
+  quantity: number;
+  unit_price: number;
   total_price: number;
 }
 

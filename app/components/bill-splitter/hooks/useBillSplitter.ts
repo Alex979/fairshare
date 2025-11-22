@@ -5,6 +5,7 @@ import {
   MOCK_DATA, 
   DEFAULT_NEW_PARTICIPANT_NAME, 
   DEFAULT_ITEM_DESCRIPTION, 
+  DEFAULT_QUANTITY,
   DEFAULT_PRICE,
   WEIGHT_INCREMENT,
   WEIGHT_INITIAL,
@@ -133,8 +134,11 @@ export function useBillSplitter() {
       );
       parsedData.line_items = parsedData.line_items.map(
         (item, i) => ({ 
+          ...item,
           id: item.id || `item${i}`,
           description: sanitizeItemDescription(item.description),
+          quantity: Math.max(1, item.quantity || 1),
+          unit_price: Math.max(0, item.unit_price || 0),
           total_price: Math.max(0, item.total_price || 0)
         })
       );
@@ -289,6 +293,8 @@ export function useBillSplitter() {
       const newItem: LineItem = {
         id: editingItem.id || `item-${Date.now()}`,
         description: sanitizedDescription,
+        quantity: Math.max(DEFAULT_QUANTITY, editingItem.quantity || DEFAULT_QUANTITY),
+        unit_price: price,
         total_price: price,
       };
 

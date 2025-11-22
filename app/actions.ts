@@ -21,7 +21,7 @@ Output this exact structure:
 {
   "meta": { "currency": "string", "notes": "string" },
   "participants": [ { "id": "string", "name": "string" } ],
-  "line_items": [ { "id": "string", "description": "string", "total_price": number } ],
+  "line_items": [ { "id": "string", "description": "string", "quantity": number, "unit_price": number, "total_price": number } ],
   "split_logic": [ 
     { 
       "item_id": "string", 

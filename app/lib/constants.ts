@@ -29,6 +29,7 @@ export const UNASSIGNED_NAME = "Unassigned";
 // Default Values
 export const DEFAULT_NEW_PARTICIPANT_NAME = "New Person";
 export const DEFAULT_ITEM_DESCRIPTION = "Item";
+export const DEFAULT_QUANTITY = 1;
 export const DEFAULT_PRICE = 0;
 
 // Validation
@@ -45,16 +46,22 @@ export const MOCK_DATA: BillData = {
     {
       id: "i1",
       description: "Shared Appetizer Platter",
+      quantity: 1,
+      unit_price: 18.0,
       total_price: 18.0,
     },
     {
       id: "i2",
       description: "Alex's Burger",
+      quantity: 1,
+      unit_price: 16.5,
       total_price: 16.5,
     },
     {
       id: "i3",
       description: "Pitcher of Beer",
+      quantity: 1,
+      unit_price: 24.0,
       total_price: 24.0,
     },
   ],
