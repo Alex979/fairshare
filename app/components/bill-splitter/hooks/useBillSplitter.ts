@@ -1,9 +1,27 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { BillData, LineItem } from "../../../types";
 import { processReceiptAction } from "../../../actions";
-import { MOCK_DATA } from "../../../lib/constants";
+import { 
+  MOCK_DATA, 
+  DEFAULT_NEW_PARTICIPANT_NAME, 
+  DEFAULT_ITEM_DESCRIPTION, 
+  DEFAULT_ITEM_CATEGORY, 
+  DEFAULT_QUANTITY, 
+  DEFAULT_PRICE,
+  WEIGHT_INCREMENT,
+  WEIGHT_INITIAL,
+  WEIGHT_MIN
+} from "../../../lib/constants";
 import { calculateTotals } from "../../../lib/bill-utils";
 import { compressImage } from "../../../lib/image-utils";
+import { 
+  isValidWeight, 
+  isValidPrice, 
+  isValidBillData,
+  canDeleteParticipant,
+  sanitizeParticipantName,
+  sanitizeItemDescription
+} from "../../../lib/validation";
 
 export type Step = "input" | "processing" | "editor";
 
@@ -25,7 +43,7 @@ export function useBillSplitter() {
     }
   }, []);
 
-  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+  const toggleDarkMode = useCallback(() => setIsDarkMode(prev => !prev), []);
 
   // --- BODY BACKGROUND & OVERSCROLL SYNC ---
   useEffect(() => {
@@ -70,7 +88,7 @@ export function useBillSplitter() {
   const calculatedTotals = useMemo(() => calculateTotals(data), [data]);
 
   // --- HANDLERS ---
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
@@ -90,9 +108,9 @@ export function useBillSplitter() {
         reader.readAsDataURL(file);
       }
     }
-  };
+  }, []);
 
-  const processReceipt = async () => {
+  const processReceipt = useCallback(async () => {
     if (!image && !promptText) return;
     setStep("processing");
     setError(null);
@@ -100,35 +118,58 @@ export function useBillSplitter() {
     try {
       const base64Data = image ? image.split(",")[1] : ""; 
 
-      const parsedData = await processReceiptAction(base64Data, promptText);
+      const parsedData = await processReceiptAction(base64Data, promptText) as BillData;
 
-      // Ensure IDs exist
+      // Validate the response structure
+      if (!isValidBillData(parsedData)) {
+        throw new Error("Invalid response structure from API");
+      }
+
+      // Ensure IDs exist and sanitize data
       parsedData.participants = parsedData.participants.map(
-        (p: any, i: number) => ({ ...p, id: p.id || `p${i}` })
+        (p, i) => ({ 
+          ...p, 
+          id: p.id || `p${i}`,
+          name: sanitizeParticipantName(p.name)
+        })
       );
       parsedData.line_items = parsedData.line_items.map(
-        (item: any, i: number) => ({ ...item, id: item.id || `item${i}` })
+        (item, i) => ({ 
+          ...item, 
+          id: item.id || `item${i}`,
+          description: sanitizeItemDescription(item.description),
+          total_price: Math.max(0, item.total_price || 0),
+          unit_price: Math.max(0, item.unit_price || 0),
+          quantity: Math.max(1, item.quantity || 1)
+        })
       );
 
       setData(parsedData);
       setStep("editor");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError("Failed to process. " + err.message);
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError("Failed to process. " + errorMessage);
       setStep("input");
     }
-  };
+  }, [image, promptText]);
 
-  const handleLoadMock = () => {
+  const handleLoadMock = useCallback(() => {
     setData(MOCK_DATA);
     setStep("editor");
-  };
+  }, []);
 
-  const updateItemSplit = (
+  const updateItemSplit = useCallback((
     itemId: string,
     participantId: string,
     newWeight: number
   ) => {
+    // Validate weight
+    if (!isValidWeight(newWeight)) {
+      console.error("Invalid weight value:", newWeight);
+      return;
+    }
+
     setData((prev) => {
       if (!prev) return null;
       const newData = { ...prev };
@@ -139,11 +180,13 @@ export function useBillSplitter() {
       );
 
       if (logicIndex === -1) {
-        newData.split_logic.push({
-          item_id: itemId,
-          method: "ratio",
-          allocations: [{ participant_id: participantId, weight: newWeight }],
-        });
+        if (newWeight > 0) {
+          newData.split_logic.push({
+            item_id: itemId,
+            method: "ratio",
+            allocations: [{ participant_id: participantId, weight: newWeight }],
+          });
+        }
       } else {
         const logic = {
           ...newData.split_logic[logicIndex],
@@ -170,9 +213,9 @@ export function useBillSplitter() {
       }
       return newData;
     });
-  };
+  }, []);
 
-  const updateModifier = (key: "tax" | "tip", field: string, value: any) => {
+  const updateModifier = useCallback((key: "tax" | "tip", field: string, value: any) => {
     setData((prev) => {
       if (!prev) return null;
       return {
@@ -183,36 +226,46 @@ export function useBillSplitter() {
         },
       };
     });
-  };
+  }, []);
 
-  const updateParticipantName = (id: string, name: string) => {
+  const updateParticipantName = useCallback((id: string, name: string) => {
+    const sanitizedName = sanitizeParticipantName(name);
+    if (!sanitizedName) return;
+
     setData((prev) => {
       if (!prev) return null;
       return {
         ...prev,
         participants: prev.participants.map((p) =>
-          p.id === id ? { ...p, name } : p
+          p.id === id ? { ...p, name: sanitizedName } : p
         ),
       };
     });
-  };
+  }, []);
 
-  const addParticipant = () => {
+  const addParticipant = useCallback(() => {
     setData((prev) => {
       if (!prev) return null;
       return {
         ...prev,
         participants: [
           ...prev.participants,
-          { id: `p${Date.now()}`, name: "New Person" },
+          { id: `p${Date.now()}`, name: DEFAULT_NEW_PARTICIPANT_NAME },
         ],
       };
     });
-  };
+  }, []);
 
-  const deleteParticipant = (id: string) => {
+  const deleteParticipant = useCallback((id: string) => {
     setData((prev) => {
       if (!prev) return null;
+      
+      // Prevent deleting the last participant
+      if (!canDeleteParticipant(prev, id)) {
+        console.warn("Cannot delete the last participant");
+        return prev;
+      }
+
       return {
         ...prev,
         participants: prev.participants.filter((p) => p.id !== id),
@@ -222,20 +275,29 @@ export function useBillSplitter() {
         })),
       };
     });
-  };
+  }, []);
 
-  const saveItem = (editingItem: Partial<LineItem>) => {
+  const saveItem = useCallback((editingItem: Partial<LineItem>) => {
      if (!editingItem || !editingItem.description) return;
+
+    const sanitizedDescription = sanitizeItemDescription(editingItem.description);
+    if (!sanitizedDescription) return;
+
+    const price = editingItem.total_price || DEFAULT_PRICE;
+    if (!isValidPrice(price)) {
+      console.error("Invalid price value:", price);
+      return;
+    }
 
     setData((prev) => {
       if (!prev) return null;
       const newItem: LineItem = {
         id: editingItem.id || `item-${Date.now()}`,
-        description: editingItem.description || "Item",
-        quantity: editingItem.quantity || 1,
-        unit_price: editingItem.total_price || 0,
-        total_price: editingItem.total_price || 0,
-        category: editingItem.category || "custom",
+        description: sanitizedDescription,
+        quantity: Math.max(DEFAULT_QUANTITY, editingItem.quantity || DEFAULT_QUANTITY),
+        unit_price: price,
+        total_price: price,
+        category: editingItem.category || DEFAULT_ITEM_CATEGORY,
       };
 
       if (editingItem.id) {
@@ -252,9 +314,9 @@ export function useBillSplitter() {
         };
       }
     });
-  }
+  }, []);
 
-  const deleteItem = (itemId: string) => {
+  const deleteItem = useCallback((itemId: string) => {
      setData((prev) => {
       if (!prev) return null;
       return {
@@ -265,7 +327,7 @@ export function useBillSplitter() {
         ),
       };
     });
-  }
+  }, []);
 
   return {
     step,

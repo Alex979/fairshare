@@ -41,6 +41,8 @@ export const ParticipantsList: React.FC<ParticipantsListProps> = ({
               value={p.name}
               onChange={(e) => onUpdateName(p.id, e.target.value)}
               className="bg-transparent border-none text-base font-medium text-gray-700 dark:text-gray-200 focus:ring-0 w-20 p-0 placeholder-gray-400 outline-none"
+              aria-label={`Edit name for ${p.name}`}
+              maxLength={50}
             />
             <button
               onClick={() => onDeleteParticipant(p.id)}

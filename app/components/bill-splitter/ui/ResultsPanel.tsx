@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { ExternalLink, ChevronDown } from "lucide-react";
 import { CalculatedTotals } from "../../../types";
 import { formatMoney, generateVenmoLink } from "../../../lib/bill-utils";
+import { UNASSIGNED_NAME } from "../../../lib/constants";
 
 interface ResultsPanelProps {
   calculatedTotals: CalculatedTotals | null;
@@ -12,6 +13,20 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
   calculatedTotals,
   mobileTab,
 }) => {
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+
+  const toggleUserExpanded = (userName: string) => {
+    setExpandedUsers((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(userName)) {
+        newSet.delete(userName);
+      } else {
+        newSet.add(userName);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div
       className={`lg:w-96 bg-white dark:bg-gray-800 shadow-xl flex-col h-full z-20 ${
@@ -25,12 +40,12 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24 lg:pb-4">
         {Object.values(calculatedTotals?.byUser || {})
-          .filter((u) => u.name !== "Unassigned" || u.total > 0)
+          .filter((u) => u.name !== UNASSIGNED_NAME || u.total > 0)
           .map((user, idx) => (
             <div
               key={idx}
               className={`p-4 rounded-xl border ${
-                user.name === "Unassigned"
+                user.name === UNASSIGNED_NAME
                   ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
                   : "bg-gray-50 dark:bg-gray-700/30 border-gray-200 dark:border-gray-700"
               }`}
@@ -38,7 +53,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
               <div className="flex justify-between items-center mb-3">
                 <h3
                   className={`font-bold text-base truncate max-w-[120px] ${
-                    user.name === "Unassigned"
+                    user.name === UNASSIGNED_NAME
                       ? "text-red-600 dark:text-red-400"
                       : "text-gray-800 dark:text-white"
                   }`}
@@ -51,7 +66,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
               </div>
 
               {/* Venmo Button */}
-              {user.name !== "Unassigned" && (
+              {user.name !== UNASSIGNED_NAME && (
                 <a
                   href={generateVenmoLink(user)}
                   target="_blank"
@@ -82,29 +97,34 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
                   <button
                     className="text-[10px] text-gray-400 font-bold uppercase mb-1 w-full text-left flex justify-between items-center hover:text-gray-600 dark:hover:text-gray-300"
-                    onClick={(e) => {
-                      const list = e.currentTarget.nextSibling as HTMLElement;
-                      if (list) list.classList.toggle("hidden");
-                    }}
+                    onClick={() => toggleUserExpanded(user.name)}
+                    aria-expanded={expandedUsers.has(user.name)}
+                    aria-label={`Toggle ${user.name}'s items`}
                   >
                     <span>{user.items.length} Items</span>
-                    <ChevronDown className="w-3 h-3" />
+                    <ChevronDown 
+                      className={`w-3 h-3 transition-transform ${
+                        expandedUsers.has(user.name) ? 'rotate-180' : ''
+                      }`} 
+                    />
                   </button>
-                  <ul className="space-y-1 hidden">
-                    {user.items.map((item, i) => (
-                      <li
-                        key={i}
-                        className="text-[10px] flex justify-between text-gray-600 dark:text-gray-400"
-                      >
-                        <span className="truncate pr-2">
-                          {item.description}
-                        </span>
-                        <span className="whitespace-nowrap">
-                          {formatMoney(item.total_price * item.share)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  {expandedUsers.has(user.name) && (
+                    <ul className="space-y-1">
+                      {user.items.map((item, i) => (
+                        <li
+                          key={i}
+                          className="text-[10px] flex justify-between text-gray-600 dark:text-gray-400"
+                        >
+                          <span className="truncate pr-2">
+                            {item.description}
+                          </span>
+                          <span className="whitespace-nowrap">
+                            {formatMoney(item.total_price * item.share)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
             </div>

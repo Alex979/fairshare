@@ -1,6 +1,7 @@
 import React from "react";
 import { List, Receipt } from "lucide-react";
 import { CalculatedTotals } from "../../../types";
+import { UNASSIGNED_ID } from "../../../lib/constants";
 
 interface MobileTabsProps {
   mobileTab: "editor" | "results";
@@ -37,7 +38,7 @@ export const MobileTabs: React.FC<MobileTabsProps> = ({
         >
           <div className="relative">
             <Receipt className="w-5 h-5" />
-            {(calculatedTotals?.byUser?.unassigned?.total ?? 0) > 0 && (
+            {(calculatedTotals?.byUser?.[UNASSIGNED_ID]?.total ?? 0) > 0 && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
             )}
           </div>

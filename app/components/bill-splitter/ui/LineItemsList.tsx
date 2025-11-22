@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { Plus, Pencil, ChevronUp, ChevronDown } from "lucide-react";
 import { BillData, LineItem } from "../../../types";
 import { formatMoney } from "../../../lib/bill-utils";
+import { WEIGHT_INCREMENT, WEIGHT_INITIAL, WEIGHT_MIN } from "../../../lib/constants";
 
 interface LineItemsListProps {
   data: BillData;
@@ -76,7 +77,11 @@ export const LineItemsList: React.FC<LineItemsListProps> = ({
                       })}
                     </div>
                   ) : (
-                    <span className="text-[10px] text-red-500 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded">
+                    <span 
+                      className="text-[10px] text-red-500 dark:text-red-400 font-medium bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded"
+                      role="status"
+                      aria-label="Item not assigned to any participant"
+                    >
                       Unassigned
                     </span>
                   )}
@@ -139,9 +144,10 @@ export const LineItemsList: React.FC<LineItemsListProps> = ({
                               onUpdateSplit(
                                 item.id,
                                 p.id,
-                                Math.max(0, weight - 0.5)
+                                Math.max(WEIGHT_MIN, weight - WEIGHT_INCREMENT)
                               )
                             }
+                            aria-label={`Decrease ${p.name}'s share`}
                           >
                             -
                           </button>
@@ -154,9 +160,10 @@ export const LineItemsList: React.FC<LineItemsListProps> = ({
                               onUpdateSplit(
                                 item.id,
                                 p.id,
-                                weight + (weight === 0 ? 1 : 0.5)
+                                weight + (weight === WEIGHT_MIN ? WEIGHT_INITIAL : WEIGHT_INCREMENT)
                               )
                             }
+                            aria-label={`Increase ${p.name}'s share`}
                           >
                             +
                           </button>
