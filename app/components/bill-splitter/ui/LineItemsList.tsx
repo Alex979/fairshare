@@ -53,7 +53,7 @@ export const LineItemsList: React.FC<LineItemsListProps> = ({
               <div className="flex-1">
                 <div className="flex justify-between mb-1">
                   <span className="font-medium text-gray-800 dark:text-gray-200 text-sm">
-                    {item.description}
+                    {item.description} x{item.quantity}
                   </span>
                   <span className="font-bold text-gray-900 dark:text-white text-sm">
                     {formatMoney(item.total_price)}
