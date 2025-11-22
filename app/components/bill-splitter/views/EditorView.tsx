@@ -16,6 +16,7 @@ interface EditorViewProps {
   calculatedTotals: CalculatedTotals | null;
   onUpdateParticipantName: (id: string, name: string) => void;
   onAddParticipant: () => void;
+  onDeleteParticipant: (id: string) => void;
   onUpdateSplit: (itemId: string, participantId: string, weight: number) => void;
   onUpdateModifier: (key: "tax" | "tip", field: string, value: any) => void;
   onSaveItem: (item: Partial<LineItem>) => void;
@@ -30,6 +31,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
   calculatedTotals,
   onUpdateParticipantName,
   onAddParticipant,
+  onDeleteParticipant,
   onUpdateSplit,
   onUpdateModifier,
   onSaveItem,
@@ -94,6 +96,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
                 participants={data.participants}
                 onUpdateName={onUpdateParticipantName}
                 onAddParticipant={onAddParticipant}
+                onDeleteParticipant={onDeleteParticipant}
               />
 
               <LineItemsList

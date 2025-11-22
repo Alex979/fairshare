@@ -196,6 +196,20 @@ export function useBillSplitter() {
     });
   };
 
+  const deleteParticipant = (id: string) => {
+    setData((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        participants: prev.participants.filter((p) => p.id !== id),
+        split_logic: prev.split_logic.map((logic) => ({
+          ...logic,
+          allocations: logic.allocations.filter((a) => a.participant_id !== id),
+        })),
+      };
+    });
+  };
+
   const saveItem = (editingItem: Partial<LineItem>) => {
      if (!editingItem || !editingItem.description) return;
 
@@ -257,6 +271,7 @@ export function useBillSplitter() {
     updateModifier,
     updateParticipantName,
     addParticipant,
+    deleteParticipant,
     saveItem,
     deleteItem,
   };

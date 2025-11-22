@@ -25,6 +25,7 @@ export default function BillSplitter() {
     updateModifier,
     updateParticipantName,
     addParticipant,
+    deleteParticipant,
     saveItem,
     deleteItem,
   } = useBillSplitter();
@@ -43,6 +44,7 @@ export default function BillSplitter() {
         calculatedTotals={calculatedTotals}
         onUpdateParticipantName={updateParticipantName}
         onAddParticipant={addParticipant}
+        onDeleteParticipant={deleteParticipant}
         onUpdateSplit={updateItemSplit}
         onUpdateModifier={updateModifier}
         onSaveItem={saveItem}

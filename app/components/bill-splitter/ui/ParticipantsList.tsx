@@ -1,17 +1,19 @@
 import React from "react";
-import { Users } from "lucide-react";
+import { Users, X } from "lucide-react";
 import { BillData } from "../../../types";
 
 interface ParticipantsListProps {
   participants: BillData["participants"];
   onUpdateName: (id: string, name: string) => void;
   onAddParticipant: () => void;
+  onDeleteParticipant: (id: string) => void;
 }
 
 export const ParticipantsList: React.FC<ParticipantsListProps> = ({
   participants,
   onUpdateName,
   onAddParticipant,
+  onDeleteParticipant,
 }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors duration-200">
@@ -40,6 +42,13 @@ export const ParticipantsList: React.FC<ParticipantsListProps> = ({
               onChange={(e) => onUpdateName(p.id, e.target.value)}
               className="bg-transparent border-none text-base font-medium text-gray-700 dark:text-gray-200 focus:ring-0 w-20 p-0 placeholder-gray-400 outline-none"
             />
+            <button
+              onClick={() => onDeleteParticipant(p.id)}
+              className="text-gray-400 hover:text-red-500 p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              aria-label="Remove participant"
+            >
+              <X className="w-3 h-3" />
+            </button>
           </div>
         ))}
       </div>
