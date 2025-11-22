@@ -37,6 +37,8 @@ Output this exact structure:
 export async function processReceiptAction(base64Data: string, userPrompt: string) {
   const apiKey = process.env.OPENROUTER_API_KEY || "";
   
+  console.log(`Processing receipt: ${Math.round(base64Data.length / 1024)}KB payload`);
+
   if (!apiKey) {
     throw new Error("OpenRouter API Key not configured on server.");
   }

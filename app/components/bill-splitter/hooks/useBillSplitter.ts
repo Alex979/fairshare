@@ -3,6 +3,7 @@ import { BillData, LineItem } from "../../../types";
 import { processReceiptAction } from "../../../actions";
 import { MOCK_DATA } from "../../../lib/constants";
 import { calculateTotals } from "../../../lib/bill-utils";
+import { compressImage } from "../../../lib/image-utils";
 
 export type Step = "input" | "processing" | "editor";
 
@@ -69,12 +70,25 @@ export function useBillSplitter() {
   const calculatedTotals = useMemo(() => calculateTotals(data), [data]);
 
   // --- HANDLERS ---
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => setImage(e.target?.result as string);
-      reader.readAsDataURL(file);
+      try {
+        // Compress image before setting state
+        const compressedDataUrl = await compressImage(file);
+        console.log(
+          `Image compressed: ${Math.round(file.size / 1024)}KB -> ${Math.round(
+            compressedDataUrl.length / 1024
+          )}KB`
+        );
+        setImage(compressedDataUrl);
+      } catch (err) {
+        console.error("Failed to compress image:", err);
+        // Fallback to original file if compression fails (though unlikely)
+        const reader = new FileReader();
+        reader.onload = (e) => setImage(e.target?.result as string);
+        reader.readAsDataURL(file);
+      }
     }
   };
 
