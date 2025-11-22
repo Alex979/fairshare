@@ -29,8 +29,6 @@ export const UNASSIGNED_NAME = "Unassigned";
 // Default Values
 export const DEFAULT_NEW_PARTICIPANT_NAME = "New Person";
 export const DEFAULT_ITEM_DESCRIPTION = "Item";
-export const DEFAULT_ITEM_CATEGORY = "custom";
-export const DEFAULT_QUANTITY = 1;
 export const DEFAULT_PRICE = 0;
 
 // Validation
@@ -47,26 +45,17 @@ export const MOCK_DATA: BillData = {
     {
       id: "i1",
       description: "Shared Appetizer Platter",
-      quantity: 1,
-      unit_price: 18.0,
       total_price: 18.0,
-      category: "food",
     },
     {
       id: "i2",
       description: "Alex's Burger",
-      quantity: 1,
-      unit_price: 16.5,
       total_price: 16.5,
-      category: "food",
     },
     {
       id: "i3",
       description: "Pitcher of Beer",
-      quantity: 1,
-      unit_price: 24.0,
       total_price: 24.0,
-      category: "alcohol",
     },
   ],
   split_logic: [
@@ -96,7 +85,6 @@ export const MOCK_DATA: BillData = {
   modifiers: {
     tax: { source: "receipt", type: "fixed", value: 5.85 },
     tip: { source: "user_prompt", type: "percentage", value: 20 },
-    fees: [],
   },
 };
 

@@ -21,7 +21,7 @@ Output this exact structure:
 {
   "meta": { "currency": "string", "notes": "string" },
   "participants": [ { "id": "string", "name": "string" } ],
-  "line_items": [ { "id": "string", "description": "string", "quantity": number, "unit_price": number, "total_price": number, "category": "string" } ],
+  "line_items": [ { "id": "string", "description": "string", "total_price": number } ],
   "split_logic": [ 
     { 
       "item_id": "string", 
@@ -31,18 +31,10 @@ Output this exact structure:
   ],
   "modifiers": {
     "tax": { "source": "receipt" | "user", "type": "fixed" | "percentage", "value": number },
-    "tip": { "source": "receipt" | "user", "type": "fixed" | "percentage", "value": number },
-    "fees": [] 
+    "tip": { "source": "receipt" | "user", "type": "fixed" | "percentage", "value": number }
   }
 }
 `;
-
-interface OpenRouterError {
-  error?: {
-    message?: string;
-    code?: string;
-  };
-}
 
 interface OpenRouterResponse {
   choices?: Array<{

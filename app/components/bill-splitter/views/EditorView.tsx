@@ -46,8 +46,6 @@ export const EditorView: React.FC<EditorViewProps> = ({
     setEditingItem({
       description: "",
       total_price: 0,
-      quantity: 1,
-      category: "custom",
     });
     setIsItemModalOpen(true);
   };
