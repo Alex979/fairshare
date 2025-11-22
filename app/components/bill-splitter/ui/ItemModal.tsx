@@ -21,26 +21,47 @@ export const ItemModal: React.FC<ItemModalProps> = ({
 }) => {
   if (!isOpen || !editingItem) return null;
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onClose();
+    } else if (e.key === 'Enter' && e.metaKey) {
+      onSave();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xs p-6 space-y-4 border dark:border-gray-700">
+    <div 
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div 
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-xs p-6 space-y-4 border dark:border-gray-700"
+        onKeyDown={handleKeyDown}
+      >
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-white">
+          <h3 id="modal-title" className="text-lg font-bold text-gray-800 dark:text-white">
             {editingItem.id ? "Edit Item" : "Add Item"}
           </h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+          <label htmlFor="item-description" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Description
           </label>
           <input
+            id="item-description"
             value={editingItem.description}
             onChange={(e) =>
               setEditingItem({
@@ -51,15 +72,19 @@ export const ItemModal: React.FC<ItemModalProps> = ({
             className="w-full border dark:border-gray-600 rounded-lg p-2 text-base dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="Item name"
             autoFocus
+            aria-required="true"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+          <label htmlFor="item-price" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Price ($)
           </label>
           <input
+            id="item-price"
             type="number"
+            step="0.01"
+            min="0"
             value={editingItem.total_price}
             onChange={(e) =>
               setEditingItem({
@@ -69,6 +94,7 @@ export const ItemModal: React.FC<ItemModalProps> = ({
             }
             className="w-full border dark:border-gray-600 rounded-lg p-2 text-base dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="0.00"
+            aria-required="true"
           />
         </div>
 

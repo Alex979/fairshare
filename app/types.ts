@@ -6,10 +6,7 @@ export interface Participant {
 export interface LineItem {
   id: string;
   description: string;
-  quantity: number;
-  unit_price: number;
   total_price: number;
-  category: string;
 }
 
 export interface SplitAllocation {
@@ -32,7 +29,6 @@ export interface Modifier {
 export interface Modifiers {
   tax: Modifier;
   tip: Modifier;
-  fees: any[];
 }
 
 export interface Meta {
