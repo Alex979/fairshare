@@ -214,15 +214,41 @@ export function useBillSplitter() {
     });
   }, []);
 
-  const updateModifier = useCallback((key: "tax" | "tip", field: string, value: any) => {
+  const updateCharge = useCallback((chargeId: string, field: string, value: string | number) => {
     setData((prev) => {
       if (!prev) return null;
       return {
         ...prev,
-        modifiers: {
-          ...prev.modifiers,
-          [key]: { ...prev.modifiers[key], [field]: value },
-        },
+        additional_charges: prev.additional_charges.map((charge) =>
+          charge.id === chargeId ? { ...charge, [field]: value } : charge
+        ),
+      };
+    });
+  }, []);
+
+  const addCharge = useCallback(() => {
+    setData((prev) => {
+      if (!prev) return null;
+      const newCharge = {
+        id: `charge-${Date.now()}`,
+        label: "New Charge",
+        source: "user" as const,
+        type: "fixed" as const,
+        value: 0,
+      };
+      return {
+        ...prev,
+        additional_charges: [...prev.additional_charges, newCharge],
+      };
+    });
+  }, []);
+
+  const deleteCharge = useCallback((chargeId: string) => {
+    setData((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        additional_charges: prev.additional_charges.filter((c) => c.id !== chargeId),
       };
     });
   }, []);
@@ -342,7 +368,9 @@ export function useBillSplitter() {
     processReceipt,
     handleLoadMock,
     updateItemSplit,
-    updateModifier,
+    updateCharge,
+    addCharge,
+    deleteCharge,
     updateParticipantName,
     addParticipant,
     deleteParticipant,

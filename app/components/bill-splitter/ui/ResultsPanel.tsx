@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { ExternalLink, ChevronDown } from "lucide-react";
-import { CalculatedTotals } from "../../../types";
+import { CalculatedTotals, AdditionalCharge } from "../../../types";
 import { formatMoney, generateVenmoLink } from "../../../lib/bill-utils";
 import { UNASSIGNED_NAME } from "../../../lib/constants";
 
 interface ResultsPanelProps {
   calculatedTotals: CalculatedTotals | null;
+  additionalCharges: AdditionalCharge[];
   mobileTab: "editor" | "results";
 }
 
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({
   calculatedTotals,
+  additionalCharges,
   mobileTab,
 }) => {
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
@@ -83,14 +85,12 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                   <span>Base</span>
                   <span>{formatMoney(user.base_amount)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Tax</span>
-                  <span>{formatMoney(user.tax_share)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tip</span>
-                  <span>{formatMoney(user.tip_share)}</span>
-                </div>
+                {additionalCharges.map((charge) => (
+                  <div key={charge.id} className="flex justify-between">
+                    <span>{charge.label}</span>
+                    <span>{formatMoney(user.charge_shares[charge.id] || 0)}</span>
+                  </div>
+                ))}
               </div>
 
               {user.items.length > 0 && (
@@ -137,15 +137,12 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
           <span>Subtotal</span>
           <span>{formatMoney(calculatedTotals?.subtotal || 0)}</span>
         </div>
-        <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
-          <span>Tax + Tip</span>
-          <span>
-            {formatMoney(
-              (calculatedTotals?.totalTax || 0) +
-                (calculatedTotals?.totalTip || 0)
-            )}
-          </span>
-        </div>
+        {additionalCharges.map((charge) => (
+          <div key={charge.id} className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <span>{charge.label}</span>
+            <span>{formatMoney(calculatedTotals?.totalCharges[charge.id] || 0)}</span>
+          </div>
+        ))}
         <div className="flex justify-between items-center text-xl font-bold text-gray-900 dark:text-white mt-2">
           <span>Total</span>
           <span>{formatMoney(calculatedTotals?.grandTotal || 0)}</span>

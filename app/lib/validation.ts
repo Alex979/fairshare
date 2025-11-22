@@ -41,14 +41,14 @@ export const isValidItemDescription = (description: string): boolean => {
  */
 export const isValidBillData = (data: unknown): data is BillData => {
   if (!data || typeof data !== 'object') return false;
-  
+
   const billData = data as Partial<BillData>;
-  
+
   return (
     Array.isArray(billData.participants) &&
     Array.isArray(billData.line_items) &&
     Array.isArray(billData.split_logic) &&
-    billData.modifiers !== undefined &&
+    Array.isArray(billData.additional_charges) &&
     billData.meta !== undefined
   );
 };

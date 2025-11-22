@@ -35,6 +35,15 @@ export const DEFAULT_PRICE = 0;
 // Validation
 export const VENMO_NOTE_MAX_LENGTH = 150;
 
+// Common Charge Types
+export const COMMON_CHARGE_TYPES = [
+  { id: "tax", label: "Tax" },
+  { id: "tip", label: "Tip" },
+  { id: "service_charge", label: "Service Charge" },
+  { id: "sf_mandate", label: "SF Mandate" },
+  { id: "delivery_fee", label: "Delivery Fee" },
+];
+
 export const MOCK_DATA: BillData = {
   meta: { currency: DEFAULT_CURRENCY, notes: "Generated example" },
   participants: [
@@ -89,9 +98,9 @@ export const MOCK_DATA: BillData = {
       ],
     },
   ],
-  modifiers: {
-    tax: { source: "receipt", type: "fixed", value: 5.85 },
-    tip: { source: "user_prompt", type: "percentage", value: 20 },
-  },
+  additional_charges: [
+    { id: "tax", label: "Tax", source: "receipt", type: "fixed", value: 5.85 },
+    { id: "tip", label: "Tip", source: "user_prompt", type: "percentage", value: 20 },
+  ],
 };
 

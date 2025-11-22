@@ -22,15 +22,12 @@ export interface SplitLogic {
   allocations: SplitAllocation[];
 }
 
-export interface Modifier {
+export interface AdditionalCharge {
+  id: string;
+  label: string;
   source: 'receipt' | 'user_prompt' | 'user';
   type: 'fixed' | 'percentage';
   value: number;
-}
-
-export interface Modifiers {
-  tax: Modifier;
-  tip: Modifier;
 }
 
 export interface Meta {
@@ -43,14 +40,13 @@ export interface BillData {
   participants: Participant[];
   line_items: LineItem[];
   split_logic: SplitLogic[];
-  modifiers: Modifiers;
+  additional_charges: AdditionalCharge[];
 }
 
 export interface CalculatedUserTotal {
   name: string;
   base_amount: number;
-  tax_share: number;
-  tip_share: number;
+  charge_shares: Record<string, number>; // Maps charge ID to amount
   total: number;
   items: {
     description: string;
@@ -61,8 +57,7 @@ export interface CalculatedUserTotal {
 
 export interface CalculatedTotals {
   subtotal: number;
-  totalTax: number;
-  totalTip: number;
+  totalCharges: Record<string, number>; // Maps charge ID to total amount
   grandTotal: number;
   byUser: Record<string, CalculatedUserTotal>;
 }

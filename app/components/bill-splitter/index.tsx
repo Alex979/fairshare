@@ -22,7 +22,9 @@ export default function BillSplitter() {
     processReceipt,
     handleLoadMock,
     updateItemSplit,
-    updateModifier,
+    updateCharge,
+    addCharge,
+    deleteCharge,
     updateParticipantName,
     addParticipant,
     deleteParticipant,
@@ -46,7 +48,9 @@ export default function BillSplitter() {
         onAddParticipant={addParticipant}
         onDeleteParticipant={deleteParticipant}
         onUpdateSplit={updateItemSplit}
-        onUpdateModifier={updateModifier}
+        onUpdateCharge={updateCharge}
+        onAddCharge={addCharge}
+        onDeleteCharge={deleteCharge}
         onSaveItem={saveItem}
         onDeleteItem={deleteItem}
       />

@@ -29,8 +29,7 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
     totals[p.id] = {
       name: p.name,
       base_amount: 0,
-      tax_share: 0,
-      tip_share: 0,
+      charge_shares: {},
       total: 0,
       items: [],
     };
@@ -38,8 +37,7 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
   totals[UNASSIGNED_ID] = {
     name: UNASSIGNED_NAME,
     base_amount: 0,
-    tax_share: 0,
-    tip_share: 0,
+    charge_shares: {},
     total: 0,
     items: [],
   };
@@ -75,28 +73,38 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
     });
   });
 
-  const getModValue = (mod: { type: 'fixed' | 'percentage'; value: number } | undefined, basis: number): number => {
-    if (!mod || mod.value === undefined || mod.value === null) return 0;
-    return mod.type === "percentage" ? basis * (mod.value / 100) : mod.value;
+  const getChargeValue = (charge: { type: 'fixed' | 'percentage'; value: number }, basis: number): number => {
+    if (charge.value === undefined || charge.value === null) return 0;
+    return charge.type === "percentage" ? basis * (charge.value / 100) : charge.value;
   };
 
-  const totalTax = getModValue(data.modifiers.tax, subtotal);
-  const totalTip = getModValue(data.modifiers.tip, subtotal);
+  // Calculate total for each charge and distribute to users
+  const totalCharges: Record<string, number> = {};
+  let totalChargesSum = 0;
 
+  data.additional_charges.forEach((charge) => {
+    const chargeTotal = getChargeValue(charge, subtotal);
+    totalCharges[charge.id] = chargeTotal;
+    totalChargesSum += chargeTotal;
+
+    // Distribute charge to users based on their share of subtotal
+    Object.keys(totals).forEach((pid) => {
+      const userShareOfSubtotal =
+        subtotal > 0 ? totals[pid].base_amount / subtotal : 0;
+      totals[pid].charge_shares[charge.id] = chargeTotal * userShareOfSubtotal;
+    });
+  });
+
+  // Calculate final totals for each user
   Object.keys(totals).forEach((pid) => {
-    const userShareOfSubtotal =
-      subtotal > 0 ? totals[pid].base_amount / subtotal : 0;
-    totals[pid].tax_share = totalTax * userShareOfSubtotal;
-    totals[pid].tip_share = totalTip * userShareOfSubtotal;
-    totals[pid].total =
-      totals[pid].base_amount + totals[pid].tax_share + totals[pid].tip_share;
+    const chargesTotal = Object.values(totals[pid].charge_shares).reduce((sum, val) => sum + val, 0);
+    totals[pid].total = totals[pid].base_amount + chargesTotal;
   });
 
   return {
     subtotal,
-    totalTax,
-    totalTip,
-    grandTotal: subtotal + totalTax + totalTip,
+    totalCharges,
+    grandTotal: subtotal + totalChargesSum,
     byUser: totals,
   };
 };

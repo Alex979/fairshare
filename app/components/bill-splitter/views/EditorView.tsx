@@ -18,7 +18,9 @@ interface EditorViewProps {
   onAddParticipant: () => void;
   onDeleteParticipant: (id: string) => void;
   onUpdateSplit: (itemId: string, participantId: string, weight: number) => void;
-  onUpdateModifier: (key: "tax" | "tip", field: string, value: any) => void;
+  onUpdateCharge: (chargeId: string, field: string, value: string | number) => void;
+  onAddCharge: () => void;
+  onDeleteCharge: (chargeId: string) => void;
   onSaveItem: (item: Partial<LineItem>) => void;
   onDeleteItem: (itemId: string) => void;
 }
@@ -33,7 +35,9 @@ export const EditorView: React.FC<EditorViewProps> = ({
   onAddParticipant,
   onDeleteParticipant,
   onUpdateSplit,
-  onUpdateModifier,
+  onUpdateCharge,
+  onAddCharge,
+  onDeleteCharge,
   onSaveItem,
   onDeleteItem,
 }) => {
@@ -109,8 +113,10 @@ export const EditorView: React.FC<EditorViewProps> = ({
               />
 
               <ModifierSection
-                modifiers={data.modifiers}
-                onUpdateModifier={onUpdateModifier}
+                additionalCharges={data.additional_charges}
+                onUpdateCharge={onUpdateCharge}
+                onAddCharge={onAddCharge}
+                onDeleteCharge={onDeleteCharge}
               />
             </div>
           </div>
@@ -118,6 +124,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
           {/* RIGHT PANEL: RESULTS */}
           <ResultsPanel
             calculatedTotals={calculatedTotals}
+            additionalCharges={data.additional_charges}
             mobileTab={mobileTab}
           />
 
