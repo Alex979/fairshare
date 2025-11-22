@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useBillSplitter } from "./hooks/useBillSplitter";
+import { useTheme } from "./hooks/useTheme";
 import { InputView } from "./views/InputView";
 import { ProcessingView } from "./views/ProcessingView";
 import { EditorView } from "./views/EditorView";
@@ -15,8 +16,6 @@ export default function BillSplitter() {
     setPromptText,
     data,
     error,
-    isDarkMode,
-    toggleDarkMode,
     calculatedTotals,
     handleImageUpload,
     processReceipt,
@@ -29,6 +28,8 @@ export default function BillSplitter() {
     saveItem,
     deleteItem,
   } = useBillSplitter();
+
+  const { isDarkMode, toggleDarkMode } = useTheme();
 
   if (step === "processing") {
     return <ProcessingView isDarkMode={isDarkMode} />;

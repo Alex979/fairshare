@@ -4,7 +4,7 @@ import { BillData } from "../../../types";
 
 interface ModifierSectionProps {
   modifiers: BillData["modifiers"];
-  onUpdateModifier: (key: "tax" | "tip", field: string, value: any) => void;
+  onUpdateModifier: (key: "tax" | "tip", field: string, value: string | number) => void;
 }
 
 export const ModifierSection: React.FC<ModifierSectionProps> = ({
@@ -57,4 +57,3 @@ export const ModifierSection: React.FC<ModifierSectionProps> = ({
     </div>
   );
 };
-

@@ -18,7 +18,7 @@ interface EditorViewProps {
   onAddParticipant: () => void;
   onDeleteParticipant: (id: string) => void;
   onUpdateSplit: (itemId: string, participantId: string, weight: number) => void;
-  onUpdateModifier: (key: "tax" | "tip", field: string, value: any) => void;
+  onUpdateModifier: (key: "tax" | "tip", field: string, value: string | number) => void;
   onSaveItem: (item: Partial<LineItem>) => void;
   onDeleteItem: (itemId: string) => void;
 }
@@ -140,4 +140,3 @@ export const EditorView: React.FC<EditorViewProps> = ({
     </div>
   );
 };
-

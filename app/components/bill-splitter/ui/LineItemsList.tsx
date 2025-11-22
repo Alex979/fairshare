@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Plus, Pencil, ChevronUp, ChevronDown } from "lucide-react";
 import { BillData, LineItem } from "../../../types";
 import { formatMoney } from "../../../lib/bill-utils";
@@ -173,4 +173,3 @@ export const LineItemsList: React.FC<LineItemsListProps> = ({
     </div>
   );
 };
-

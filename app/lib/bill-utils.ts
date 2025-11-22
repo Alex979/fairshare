@@ -1,4 +1,4 @@
-import { BillData, CalculatedTotals, CalculatedUserTotal } from "../types";
+import { BillData, CalculatedTotals, CalculatedUserTotal, Modifier } from "../types";
 
 export const formatMoney = (amount: number, currency: string = "USD") => {
   return new Intl.NumberFormat("en-US", {
@@ -11,9 +11,14 @@ export const generateVenmoLink = (user: CalculatedUserTotal) => {
   const amount = user.total.toFixed(2);
   let note = `${user.items.map((i) => i.description).join(", ")}`;
   if (note.length > 150) note = note.substring(0, 147) + "...";
-  return `venmo://paycharge?txn=charge&amount=${amount}&note=${encodeURIComponent(
-    note
-  )}`;
+  
+  const params = new URLSearchParams({
+      txn: "charge",
+      amount: amount,
+      note: note,
+  });
+
+  return `venmo://paycharge?${params.toString()}`;
 };
 
 export const calculateTotals = (data: BillData | null): CalculatedTotals | null => {
@@ -60,7 +65,7 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
 
     allocs.forEach((alloc) => {
       if (totals[alloc.participant_id]) {
-        const shareFraction = alloc.weight / totalWeight;
+        const shareFraction = totalWeight > 0 ? alloc.weight / totalWeight : 0;
         const costShare = item.total_price * shareFraction;
         totals[alloc.participant_id].base_amount += costShare;
         totals[alloc.participant_id].items.push({
@@ -72,7 +77,7 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
     });
   });
 
-  const getModValue = (mod: any, basis: number) => {
+  const getModValue = (mod: Modifier, basis: number) => {
     if (!mod) return 0;
     return mod.type === "percentage" ? basis * (mod.value / 100) : mod.value;
   };
@@ -97,4 +102,3 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
     byUser: totals,
   };
 };
-

@@ -63,6 +63,7 @@ export const InputView: React.FC<InputViewProps> = ({
                 onClick={() => fileInputRef.current?.click()}
               >
                 {image ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={image}
                     alt="Receipt"
@@ -127,4 +128,3 @@ export const InputView: React.FC<InputViewProps> = ({
     </div>
   );
 };
-

@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { BillData, LineItem } from "../../../types";
+import { useState, useMemo } from "react";
+import { BillData, LineItem, Participant } from "../../../types";
 import { processReceiptAction } from "../../../actions";
 import { MOCK_DATA } from "../../../lib/constants";
 import { calculateTotals } from "../../../lib/bill-utils";
@@ -13,58 +13,6 @@ export function useBillSplitter() {
   const [promptText, setPromptText] = useState("");
   const [data, setData] = useState<BillData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // --- DARK MODE INIT ---
-  useEffect(() => {
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      setIsDarkMode(true);
-    }
-  }, []);
-
-  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
-
-  // --- BODY BACKGROUND & OVERSCROLL SYNC ---
-  useEffect(() => {
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.overscrollBehaviorY = "";
-      document.body.style.backgroundColor = "";
-      document.documentElement.style.backgroundColor = "";
-      document.documentElement.classList.remove("dark");
-    };
-  }, []);
-
-  useEffect(() => {
-    const body = document.body;
-    const root = document.documentElement;
-
-    // 1. Handle Dark Mode
-    if (isDarkMode) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-
-    // 2. Single fallback colors
-    const defaultColor = isDarkMode ? "#111827" : "#f9fafb";
-
-    // 3. Apply the fallback color
-    body.style.backgroundColor = defaultColor;
-    root.style.backgroundColor = defaultColor;
-
-    // 4. Manage scroll locking
-    if (step === "editor") {
-      body.style.overflow = "hidden";
-      body.style.overscrollBehaviorY = "none";
-    } else {
-      body.style.overflow = "auto";
-      body.style.overscrollBehaviorY = "auto";
-    }
-  }, [step, isDarkMode]);
 
   // --- CALCULATED TOTALS ---
   const calculatedTotals = useMemo(() => calculateTotals(data), [data]);
@@ -74,7 +22,6 @@ export function useBillSplitter() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        // Compress image before setting state
         const compressedDataUrl = await compressImage(file);
         console.log(
           `Image compressed: ${Math.round(file.size / 1024)}KB -> ${Math.round(
@@ -84,7 +31,6 @@ export function useBillSplitter() {
         setImage(compressedDataUrl);
       } catch (err) {
         console.error("Failed to compress image:", err);
-        // Fallback to original file if compression fails (though unlikely)
         const reader = new FileReader();
         reader.onload = (e) => setImage(e.target?.result as string);
         reader.readAsDataURL(file);
@@ -102,25 +48,28 @@ export function useBillSplitter() {
 
       const parsedData = await processReceiptAction(base64Data, promptText);
 
-      // Ensure IDs exist
+      // Ensure IDs exist (though Zod should catch this, this is safe for fallback/mock if needed)
       parsedData.participants = parsedData.participants.map(
-        (p: any, i: number) => ({ ...p, id: p.id || `p${i}` })
+        (p: Participant, i: number) => ({ ...p, id: p.id || `p${i}` })
       );
       parsedData.line_items = parsedData.line_items.map(
-        (item: any, i: number) => ({ ...item, id: item.id || `item${i}` })
+        (item: LineItem, i: number) => ({ ...item, id: item.id || `item${i}` })
       );
 
       setData(parsedData);
       setStep("editor");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError("Failed to process. " + err.message);
+      const errorMessage = err instanceof Error ? err.message : "Failed to process receipt";
+      setError(errorMessage);
       setStep("input");
     }
   };
 
   const handleLoadMock = () => {
-    setData(MOCK_DATA);
+    // MOCK_DATA is typed as 'any' in constants usually, so we cast or it just works if structure matches
+    // Assuming MOCK_DATA matches BillData structure
+    setData(MOCK_DATA as unknown as BillData);
     setStep("editor");
   };
 
@@ -132,47 +81,46 @@ export function useBillSplitter() {
     setData((prev) => {
       if (!prev) return null;
       const newData = { ...prev };
-      newData.split_logic = [...prev.split_logic];
+      // Deep copy logic arrays to avoid mutation
+      newData.split_logic = prev.split_logic.map(l => ({...l, allocations: [...l.allocations]}));
 
-      const logicIndex = newData.split_logic.findIndex(
+      let logicIndex = newData.split_logic.findIndex(
         (l) => l.item_id === itemId
       );
 
       if (logicIndex === -1) {
+        // Create new logic if it doesn't exist
         newData.split_logic.push({
           item_id: itemId,
           method: "ratio",
-          allocations: [{ participant_id: participantId, weight: newWeight }],
+          allocations: [],
         });
-      } else {
-        const logic = {
-          ...newData.split_logic[logicIndex],
-          allocations: [...newData.split_logic[logicIndex].allocations],
-        };
-        const allocIndex = logic.allocations.findIndex(
-          (a) => a.participant_id === participantId
-        );
-
-        if (allocIndex > -1) {
-          if (newWeight <= 0) logic.allocations.splice(allocIndex, 1);
-          else
-            logic.allocations[allocIndex] = {
-              ...logic.allocations[allocIndex],
-              weight: newWeight,
-            };
-        } else if (newWeight > 0) {
-          logic.allocations.push({
-            participant_id: participantId,
-            weight: newWeight,
-          });
-        }
-        newData.split_logic[logicIndex] = logic;
+        logicIndex = newData.split_logic.length - 1;
       }
+
+      const logic = newData.split_logic[logicIndex];
+      const allocIndex = logic.allocations.findIndex(
+        (a) => a.participant_id === participantId
+      );
+
+      if (allocIndex > -1) {
+        if (newWeight <= 0) {
+            logic.allocations.splice(allocIndex, 1);
+        } else {
+            logic.allocations[allocIndex].weight = newWeight;
+        }
+      } else if (newWeight > 0) {
+        logic.allocations.push({
+          participant_id: participantId,
+          weight: newWeight,
+        });
+      }
+      
       return newData;
     });
   };
 
-  const updateModifier = (key: "tax" | "tip", field: string, value: any) => {
+  const updateModifier = (key: "tax" | "tip", field: string, value: string | number) => {
     setData((prev) => {
       if (!prev) return null;
       return {
@@ -233,7 +181,7 @@ export function useBillSplitter() {
         id: editingItem.id || `item-${Date.now()}`,
         description: editingItem.description || "Item",
         quantity: editingItem.quantity || 1,
-        unit_price: editingItem.total_price || 0,
+        unit_price: editingItem.total_price || 0, // Fallback if unit_price missing
         total_price: editingItem.total_price || 0,
         category: editingItem.category || "custom",
       };
@@ -275,8 +223,6 @@ export function useBillSplitter() {
     setPromptText,
     data,
     error,
-    isDarkMode,
-    toggleDarkMode,
     calculatedTotals,
     handleImageUpload,
     processReceipt,
@@ -290,4 +236,3 @@ export function useBillSplitter() {
     deleteItem,
   };
 }
-
