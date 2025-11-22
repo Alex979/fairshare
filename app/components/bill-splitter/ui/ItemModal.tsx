@@ -77,23 +77,51 @@ export const ItemModal: React.FC<ItemModalProps> = ({
         </div>
 
         <div>
-          <label htmlFor="item-price" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Price ($)
+          <label htmlFor="item-unit-price" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Unit Price ($)
           </label>
           <input
-            id="item-price"
+            id="item-unit-price"
             type="number"
             step="0.01"
             min="0"
-            value={editingItem.total_price}
-            onChange={(e) =>
+            value={editingItem.unit_price}
+            onChange={(e) => {
+              const unitPrice = parseFloat(e.target.value) || 0;
+              const quantity = editingItem.quantity || 1;
               setEditingItem({
                 ...editingItem,
-                total_price: parseFloat(e.target.value) || 0,
-              })
-            }
+                unit_price: unitPrice,
+                total_price: unitPrice * quantity,
+              });
+            }}
             className="w-full border dark:border-gray-600 rounded-lg p-2 text-base dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="0.00"
+            aria-required="true"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="item-quantity" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Quantity
+          </label>
+          <input
+            id="item-quantity"
+            type="number"
+            step="1"
+            min="1"
+            value={editingItem.quantity || 1}
+            onChange={(e) => {
+              const quantity = parseInt(e.target.value) || 1;
+              const unitPrice = editingItem.unit_price || 0;
+              setEditingItem({
+                ...editingItem,
+                quantity: quantity,
+                total_price: unitPrice * quantity,
+              });
+            }}
+            className="w-full border dark:border-gray-600 rounded-lg p-2 text-base dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="1"
             aria-required="true"
           />
         </div>
