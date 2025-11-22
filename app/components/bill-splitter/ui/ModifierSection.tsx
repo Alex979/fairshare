@@ -1,10 +1,19 @@
 import React from "react";
 import { DollarSign } from "lucide-react";
-import { BillData } from "../../../types";
+import {
+  BillData,
+  Modifier,
+  ModifierField,
+  ModifierKey,
+} from "../../../types";
 
 interface ModifierSectionProps {
   modifiers: BillData["modifiers"];
-  onUpdateModifier: (key: "tax" | "tip", field: string, value: any) => void;
+  onUpdateModifier: (
+    key: ModifierKey,
+    field: ModifierField,
+    value: number | Modifier["type"]
+  ) => void;
 }
 
 export const ModifierSection: React.FC<ModifierSectionProps> = ({

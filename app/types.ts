@@ -29,10 +29,18 @@ export interface Modifier {
   value: number;
 }
 
+export interface Fee {
+  description: string;
+  value: number;
+}
+
+export type ModifierKey = "tax" | "tip";
+export type ModifierField = "type" | "value";
+
 export interface Modifiers {
   tax: Modifier;
   tip: Modifier;
-  fees: any[];
+  fees: Fee[];
 }
 
 export interface Meta {

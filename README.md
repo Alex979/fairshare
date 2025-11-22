@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## FairShare · AI Bill Splitter
 
-## Getting Started
+FairShare lets you snap a photo of a receipt, describe who ordered what, and instantly produce a clean breakdown (per‑person totals, Venmo deeplinks, and “unassigned” reminders). It is built on Next.js 16 with the App Router and runs entirely client-side except for the server action that calls OpenRouter for multimodal parsing.
 
-First, run the development server:
+### Features
+- Receipt photo compression before upload to keep payloads small.
+- Natural-language instructions (e.g. “Alex ate the burger, everyone split the apps, add 20% tip”).
+- Inline editing of participants, line items, modifiers, and share weights.
+- Responsive editor/results layout with manual dark mode toggle.
+- Calculated Venmo deeplinks to speed up payback requests.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Requirements
+- Node.js 18+ (tested with 22.x)
+- npm 10+
+- An [OpenRouter API key](https://openrouter.ai/) with access to Gemini 2.5 Flash or equivalent multimodal model.
+
+### Getting Started
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Create `.env.local` and add your OpenRouter key:
+   ```bash
+   echo "OPENROUTER_API_KEY=sk-your-key" > .env.local
+   ```
+3. Run the dev server:
+   ```bash
+   npm run dev
+   ```
+4. Visit `http://localhost:3000`.
+
+### Environment Variables
+| Name | Description |
+| ---- | ----------- |
+| `OPENROUTER_API_KEY` | Required. Used by `processReceiptAction` to talk to OpenRouter. |
+
+### Available Scripts
+- `npm run dev` – Start Next.js in development.
+- `npm run build` – Build the production bundle.
+- `npm run start` – Serve the production build.
+- `npm run lint` – Run ESLint (Next.js + TypeScript rules).
+
+### Project Layout
+```
+app/
+  actions.ts                # Server actions (LLM receipt parsing)
+  components/bill-splitter/ # Input, processing, editor UI
+  lib/                      # Domain utilities (totals, validation, imaging)
+  types.ts                  # Shared domain models
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Notes
+- A mock dataset is available via “Use Example Data” in the UI; edits are performed on a fresh clone so the fixture stays pristine.
+- The OpenRouter payload is validated and sanitized before it ever hits the UI. If the LLM returns malformed JSON, the app surfaces a friendly error instead of silently breaking.
+- When building for production, ensure your deployment target allows outbound HTTPS requests to `https://openrouter.ai`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Happy splitting! 🎉

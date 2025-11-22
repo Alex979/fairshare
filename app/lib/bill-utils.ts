@@ -1,4 +1,9 @@
-import { BillData, CalculatedTotals, CalculatedUserTotal } from "../types";
+import {
+  BillData,
+  CalculatedTotals,
+  CalculatedUserTotal,
+  Modifier,
+} from "../types";
 
 export const formatMoney = (amount: number, currency: string = "USD") => {
   return new Intl.NumberFormat("en-US", {
@@ -72,7 +77,7 @@ export const calculateTotals = (data: BillData | null): CalculatedTotals | null 
     });
   });
 
-  const getModValue = (mod: any, basis: number) => {
+  const getModValue = (mod: Modifier | undefined, basis: number) => {
     if (!mod) return 0;
     return mod.type === "percentage" ? basis * (mod.value / 100) : mod.value;
   };

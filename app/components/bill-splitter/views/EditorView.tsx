@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { BillData, LineItem, CalculatedTotals } from "../../../types";
+import {
+  BillData,
+  LineItem,
+  CalculatedTotals,
+  Modifier,
+  ModifierField,
+  ModifierKey,
+} from "../../../types";
 import { Header } from "../ui/Header";
 import { ParticipantsList } from "../ui/ParticipantsList";
 import { LineItemsList } from "../ui/LineItemsList";
@@ -18,7 +25,11 @@ interface EditorViewProps {
   onAddParticipant: () => void;
   onDeleteParticipant: (id: string) => void;
   onUpdateSplit: (itemId: string, participantId: string, weight: number) => void;
-  onUpdateModifier: (key: "tax" | "tip", field: string, value: any) => void;
+  onUpdateModifier: (
+    key: ModifierKey,
+    field: ModifierField,
+    value: number | Modifier["type"]
+  ) => void;
   onSaveItem: (item: Partial<LineItem>) => void;
   onDeleteItem: (itemId: string) => void;
 }

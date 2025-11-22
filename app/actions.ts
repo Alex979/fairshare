@@ -1,4 +1,10 @@
-'use server';
+"use server";
+
+import { sanitizeBillData } from "./lib/validation";
+
+type OpenRouterContent =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
 
 const SYSTEM_PROMPT = `
 You are a receipt parsing engine. Return ONLY raw JSON. No markdown, no explanation.
@@ -34,55 +40,96 @@ Output this exact structure:
 }
 `;
 
-export async function processReceiptAction(base64Data: string, userPrompt: string) {
+export async function processReceiptAction(
+  base64Data: string | null,
+  userPrompt: string
+) {
   const apiKey = process.env.OPENROUTER_API_KEY || "";
-  
-  console.log(`Processing receipt: ${Math.round(base64Data.length / 1024)}KB payload`);
+
+  if (!base64Data && !userPrompt.trim()) {
+    throw new Error("Provide a receipt image or description to continue.");
+  }
+
+  const payloadSize = base64Data ? Math.round(base64Data.length / 1024) : 0;
+  console.log(`Processing receipt: ${payloadSize}KB payload`);
 
   if (!apiKey) {
     throw new Error("OpenRouter API Key not configured on server.");
   }
 
   try {
+    const userContent: OpenRouterContent[] = [
+      {
+        type: "text",
+        text: `User Instructions: ${userPrompt || "Follow only the receipt."}`,
+      },
+    ];
+
+    if (base64Data) {
+      userContent.push({
+        type: "image_url",
+        image_url: {
+          url: `data:image/jpeg;base64,${base64Data}`,
+        },
+      });
+    }
+
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
+      cache: "no-store",
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-preview-09-2025",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           {
             role: "user",
-            content: [
-              { type: "text", text: `User Instructions: ${userPrompt}` },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Data}`
-                }
-              }
-            ]
-          }
-        ]
-      })
+            content: userContent,
+          },
+        ],
+      }),
     });
 
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `OpenRouter request failed (${response.status}): ${errorBody || "Unknown error"}`
+      );
+    }
+
     const result = await response.json();
-    if (result.error) throw new Error(result.error.message || "OpenRouter API Error");
+    if (result.error) {
+      throw new Error(result.error.message || "OpenRouter API Error");
+    }
 
-    let jsonText = result.choices[0].message.content;
-    // Clean up markdown code blocks if present
-    jsonText = jsonText.replace(/```json\n?|```/g, "").trim();
+    const rawContent = result.choices?.[0]?.message?.content;
+    const jsonText =
+      typeof rawContent === "string"
+        ? rawContent
+        : Array.isArray(rawContent)
+        ? rawContent
+            .map((segment) =>
+              typeof segment?.text === "string" ? segment.text : ""
+            )
+            .join("\n")
+        : "";
 
-    const parsedData = JSON.parse(jsonText);
-    
-    return parsedData;
-  } catch (err: any) {
+    if (!jsonText.trim()) {
+      throw new Error("Received empty response from OpenRouter.");
+    }
+
+    const cleaned = jsonText.replace(/```json\n?|```/gi, "").trim();
+    const parsedData = JSON.parse(cleaned);
+
+    return sanitizeBillData(parsedData);
+  } catch (err: unknown) {
     console.error("OpenRouter API Error:", err);
-    throw new Error(err.message || "Failed to process receipt");
+    const message =
+      err instanceof Error ? err.message : "Failed to process receipt";
+    throw new Error(message);
   }
 }
 

@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import Image from "next/image";
 import { Camera, Moon, Sun, PieChart, AlertCircle } from "lucide-react";
 
 interface InputViewProps {
@@ -63,10 +64,13 @@ export const InputView: React.FC<InputViewProps> = ({
                 onClick={() => fileInputRef.current?.click()}
               >
                 {image ? (
-                  <img
+                  <Image
                     src={image}
-                    alt="Receipt"
-                    className="w-full h-full object-cover"
+                    alt="Receipt preview"
+                    fill
+                    sizes="(max-width: 640px) 100vw, 400px"
+                    className="object-cover"
+                    unoptimized
                   />
                 ) : (
                   <>

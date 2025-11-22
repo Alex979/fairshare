@@ -1,5 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
-import { BillData, LineItem } from "../../../types";
+import {
+  BillData,
+  LineItem,
+  Modifier,
+  ModifierField,
+  ModifierKey,
+} from "../../../types";
 import { processReceiptAction } from "../../../actions";
 import { MOCK_DATA } from "../../../lib/constants";
 import { calculateTotals } from "../../../lib/bill-utils";
@@ -13,17 +19,10 @@ export function useBillSplitter() {
   const [promptText, setPromptText] = useState("");
   const [data, setData] = useState<BillData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // --- DARK MODE INIT ---
-  useEffect(() => {
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      setIsDarkMode(true);
-    }
-  }, []);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -98,29 +97,39 @@ export function useBillSplitter() {
     setError(null);
 
     try {
-      const base64Data = image ? image.split(",")[1] : ""; 
-
-      const parsedData = await processReceiptAction(base64Data, promptText);
+      const base64Data = image ? image.split(",")[1] ?? null : null;
+      const parsedData = await processReceiptAction(
+        base64Data,
+        promptText.trim()
+      );
 
       // Ensure IDs exist
-      parsedData.participants = parsedData.participants.map(
-        (p: any, i: number) => ({ ...p, id: p.id || `p${i}` })
-      );
-      parsedData.line_items = parsedData.line_items.map(
-        (item: any, i: number) => ({ ...item, id: item.id || `item${i}` })
-      );
+      parsedData.participants = parsedData.participants.map((participant, i) => ({
+        ...participant,
+        id: participant.id || `p${i}`,
+      }));
+      parsedData.line_items = parsedData.line_items.map((item, i) => ({
+        ...item,
+        id: item.id || `item${i}`,
+      }));
 
       setData(parsedData);
       setStep("editor");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError("Failed to process. " + err.message);
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
+      setError("Failed to process. " + message);
       setStep("input");
     }
   };
 
   const handleLoadMock = () => {
-    setData(MOCK_DATA);
+    const mockCopy =
+      typeof structuredClone === "function"
+        ? structuredClone(MOCK_DATA)
+        : JSON.parse(JSON.stringify(MOCK_DATA));
+    setData(mockCopy);
     setStep("editor");
   };
 
@@ -172,14 +181,29 @@ export function useBillSplitter() {
     });
   };
 
-  const updateModifier = (key: "tax" | "tip", field: string, value: any) => {
+  const coerceModifierValue = (
+    field: ModifierField,
+    value: number | Modifier["type"]
+  ) => {
+    if (field === "value") {
+      return typeof value === "number" ? value : Number(value) || 0;
+    }
+    return value === "percentage" ? "percentage" : "fixed";
+  };
+
+  const updateModifier = (
+    key: ModifierKey,
+    field: ModifierField,
+    value: number | Modifier["type"]
+  ) => {
     setData((prev) => {
       if (!prev) return null;
+      const nextValue = coerceModifierValue(field, value);
       return {
         ...prev,
         modifiers: {
           ...prev.modifiers,
-          [key]: { ...prev.modifiers[key], [field]: value },
+          [key]: { ...prev.modifiers[key], [field]: nextValue },
         },
       };
     });

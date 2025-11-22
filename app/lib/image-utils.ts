@@ -25,7 +25,11 @@ export const compressImage = (file: File, maxWidth = 1280, quality = 0.7): Promi
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
+        if (!ctx) {
+          reject(new Error("Unable to obtain canvas context for compression."));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
         
         // Determine format based on input, but prefer JPEG for photos
         const mimeType = 'image/jpeg';
