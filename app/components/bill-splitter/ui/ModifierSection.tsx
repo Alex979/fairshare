@@ -20,6 +20,9 @@ export const ModifierSection: React.FC<ModifierSectionProps> = ({
   modifiers,
   onUpdateModifier,
 }) => {
+  const ensureTipType = (value: string): Modifier["type"] =>
+    value === "percentage" ? "percentage" : "fixed";
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 space-y-4 mb-8">
       <h2 className="font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2 text-sm">
@@ -46,7 +49,9 @@ export const ModifierSection: React.FC<ModifierSectionProps> = ({
           <div className="flex">
             <select
               value={modifiers.tip.type}
-              onChange={(e) => onUpdateModifier("tip", "type", e.target.value)}
+                onChange={(e) =>
+                  onUpdateModifier("tip", "type", ensureTipType(e.target.value))
+                }
               className="bg-gray-50 dark:bg-gray-700 border-y border-l dark:border-gray-600 rounded-l text-xs px-1 dark:text-white"
             >
               <option value="percentage">%</option>

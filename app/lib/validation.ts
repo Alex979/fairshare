@@ -1,8 +1,10 @@
 import {
   BillData,
   LineItem,
+  Meta,
   Modifier,
   Participant,
+  SplitAllocation,
   SplitLogic,
 } from "../types";
 
@@ -97,7 +99,7 @@ const normalizeSplitLogic = (
     ? (raw.method as SplitLogic["method"])
     : "ratio";
 
-  const allocations = Array.isArray(raw.allocations)
+  const allocations: SplitAllocation[] = Array.isArray(raw.allocations)
     ? raw.allocations
         .map((alloc) => {
           const participantId = isNonEmptyString(alloc?.participant_id)
@@ -113,7 +115,10 @@ const normalizeSplitLogic = (
           }
           return { participant_id: participantId, weight };
         })
-        .filter(Boolean)
+        .filter(
+          (alloc): alloc is { participant_id: string; weight: number } =>
+            Boolean(alloc)
+        )
     : [];
 
   return {
@@ -158,7 +163,7 @@ export const sanitizeBillData = (payload: unknown): BillData => {
     }, new Map<string, SplitLogic>())
   ).map(([, logic]) => logic);
 
-  const meta = raw.meta || {};
+  const meta = (raw.meta || {}) as Partial<Meta>;
 
   return {
     meta: {
