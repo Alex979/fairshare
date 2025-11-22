@@ -121,6 +121,48 @@ export default function BillSplitter() {
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
+  // --- BODY BACKGROUND & OVERSCROLL SYNC ---
+  // Separate cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.overscrollBehaviorY = "";
+      document.body.style.backgroundColor = "";
+      document.documentElement.style.backgroundColor = "";
+      document.documentElement.classList.remove("dark");
+    };
+  }, []);
+
+  useEffect(() => {
+    const body = document.body;
+    const root = document.documentElement;
+
+    // 1. Handle Dark Mode
+    if (isDarkMode) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+
+    // 2. Single fallback colors (matches processing view)
+    const defaultColor = isDarkMode ? "#111827" : "#f9fafb"; // gray-900 / gray-50
+
+    // 3. Apply the fallback color (Safari will override when it samples a full-screen view)
+    body.style.backgroundColor = defaultColor;
+    root.style.backgroundColor = defaultColor;
+
+    // 4. Manage scroll locking for editor vs other steps
+    if (step === "editor") {
+      body.style.overflow = "hidden";
+      body.style.overscrollBehaviorY = "none";
+    } else {
+      body.style.overflow = "auto";
+      body.style.overscrollBehaviorY = "auto";
+    }
+
+    // NOTE: No cleanup function here. The previous effect handles teardown on unmount.
+  }, [step, isDarkMode]);
+
   // --- CALCULATOR LOGIC ---
   const calculatedTotals = useMemo<CalculatedTotals | null>(() => {
     if (!data) return null;
@@ -419,7 +461,7 @@ export default function BillSplitter() {
   if (step === "processing") {
     return (
       <div className={isDarkMode ? "dark" : ""}>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-6 transition-colors duration-200">
+        <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-6 transition-colors duration-200">
           <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mb-4"></div>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             Reading receipt...
@@ -432,9 +474,9 @@ export default function BillSplitter() {
   if (step === "editor" && data) {
     return (
       <div className={isDarkMode ? "dark" : ""}>
-        <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900 overflow-hidden font-sans transition-colors duration-200">
+        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col bg-gray-100 dark:bg-gray-900 overflow-hidden font-sans transition-colors duration-200">
           {/* Header */}
-          <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-4 py-3 flex justify-between items-center shadow-sm z-20 shrink-0">
+          <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] flex justify-between items-center shadow-sm z-20 shrink-0">
             <div className="flex items-center gap-2">
               <div className="bg-blue-600 p-1.5 rounded-lg">
                 <Calculator className="w-4 h-4 text-white" />
@@ -847,34 +889,36 @@ export default function BillSplitter() {
             </div>
 
             {/* MOBILE BOTTOM TAB NAVIGATION */}
-            <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 flex h-16 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30">
-              <button
-                onClick={() => setMobileTab("editor")}
-                className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${
-                  mobileTab === "editor"
-                    ? "text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20"
-                    : "text-gray-500 dark:text-gray-400"
-                }`}
-              >
-                <List className="w-5 h-5" />
-                Edit Split
-              </button>
-              <button
-                onClick={() => setMobileTab("results")}
-                className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${
-                  mobileTab === "results"
-                    ? "text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20"
-                    : "text-gray-500 dark:text-gray-400"
-                }`}
-              >
-                <div className="relative">
-                  <Receipt className="w-5 h-5" />
-                  {(calculatedTotals?.byUser?.unassigned?.total ?? 0) > 0 && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
-                  )}
-                </div>
-                Final Bill
-              </button>
+            <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30 pb-[env(safe-area-inset-bottom)]">
+              <div className="flex h-16">
+                <button
+                  onClick={() => setMobileTab("editor")}
+                  className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${
+                    mobileTab === "editor"
+                      ? "text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20"
+                      : "text-gray-500 dark:text-gray-400"
+                  }`}
+                >
+                  <List className="w-5 h-5" />
+                  Edit Split
+                </button>
+                <button
+                  onClick={() => setMobileTab("results")}
+                  className={`flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors ${
+                    mobileTab === "results"
+                      ? "text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20"
+                      : "text-gray-500 dark:text-gray-400"
+                  }`}
+                >
+                  <div className="relative">
+                    <Receipt className="w-5 h-5" />
+                    {(calculatedTotals?.byUser?.unassigned?.total ?? 0) > 0 && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
+                    )}
+                  </div>
+                  Final Bill
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -957,7 +1001,7 @@ export default function BillSplitter() {
   // --- INPUT STEP RENDER ---
   return (
     <div className={isDarkMode ? "dark" : ""}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex flex-col items-center justify-center p-4 font-sans text-gray-800 dark:text-gray-100 transition-colors duration-200">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex flex-col items-center justify-center p-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] font-sans text-gray-800 dark:text-gray-100 transition-colors duration-200">
         <button
           onClick={toggleDarkMode}
           className="hidden sm:block absolute top-6 right-6 p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors text-gray-700 dark:text-white"
@@ -1057,7 +1101,7 @@ export default function BillSplitter() {
               onClick={handleLoadMock}
               className="w-full text-gray-400 dark:text-gray-500 text-xs font-medium hover:text-blue-600 dark:hover:text-blue-400 mt-2"
             >
-              Use Example Data (No API Key needed)
+              Use Example Data
             </button>
           </div>
         </div>
