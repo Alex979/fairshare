@@ -9,7 +9,7 @@ export const formatMoney = (amount: number, currency: string = "USD") => {
 
 export const generateVenmoLink = (user: CalculatedUserTotal) => {
   const amount = user.total.toFixed(2);
-  let note = `FairShare: ${user.items.map((i) => i.description).join(", ")}`;
+  let note = `${user.items.map((i) => i.description).join(", ")}`;
   if (note.length > 150) note = note.substring(0, 147) + "...";
   return `venmo://paycharge?txn=charge&amount=${amount}&note=${encodeURIComponent(
     note
